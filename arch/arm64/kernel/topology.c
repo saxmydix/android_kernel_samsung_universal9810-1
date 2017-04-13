@@ -228,7 +228,7 @@ const struct sched_group_energy * const cpu_cluster_energy(int cpu)
 {
 	struct sched_group_energy *sge = sge_array[cpu][SD_LEVEL1];
 
-	if (!sge) {
+	if (sched_is_energy_aware() && !sge) {
 		pr_debug("Invalid sched_group_energy for Cluster%d\n", cpu);
 		return NULL;
 	}
@@ -241,7 +241,7 @@ const struct sched_group_energy * const cpu_core_energy(int cpu)
 {
 	struct sched_group_energy *sge = sge_array[cpu][SD_LEVEL0];
 
-	if (!sge) {
+	if (sched_is_energy_aware() && !sge) {
 		pr_debug("Invalid sched_group_energy for CPU%d\n", cpu);
 		return NULL;
 	}

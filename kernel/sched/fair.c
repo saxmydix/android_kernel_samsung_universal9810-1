@@ -5457,6 +5457,15 @@ static inline bool energy_aware(void)
 }
 
 /*
+ * Externally visible function. Let's keep the one above
+ * so that the check is inlined/optimized in the sched paths.
+ */
+bool sched_is_energy_aware(void)
+{
+	return energy_aware();
+}
+
+/*
  * CPU candidates.
  *
  * These are labels to reference CPU candidates for an energy_diff.
@@ -6700,7 +6709,7 @@ done:
 
 	return target;
 }
- 
+
 /*
  * cpu_util_wake: Compute cpu utilization with any contributions from
  * the waking task p removed.  check_for_migration() looks for a better CPU of
@@ -7044,7 +7053,7 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 /*
  * Disable WAKE_AFFINE in the case where task @p doesn't fit in the
  * capacity of either the waking CPU @cpu or the previous CPU @prev_cpu.
- * 
+ *
  * In that case WAKE_AFFINE doesn't make sense and we'll let
  * BALANCE_WAKE sort things out.
  */
