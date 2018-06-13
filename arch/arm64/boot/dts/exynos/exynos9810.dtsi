@@ -4983,18 +4983,18 @@
 			device_type = "freqvar-tune";
 			shared-cpus = "0-3";
 
-			boost_table = < 100 598000 60 715000 30 832000 20 949000 10 1053000 0 >;
-			up_rate_limit_table = < 5000 >;
-			down_rate_limit_table = < 5000 >;
+			boost_table = < 0 >;
+			up_rate_limit_table = < 500 >;
+			down_rate_limit_table = < 20000 >;
 			upscale_ratio_table = < 80 >;
 		};
 		domain@1 {
 			device_type = "freqvar-tune";
 			shared-cpus = "4-7";
 
-			boost_table = < 20 858000 15 962000 5 1261000 0 >;
-			up_rate_limit_table = < 5000 >;
-			down_rate_limit_table = < 5000 >;
+			boost_table = < 0 >;
+			up_rate_limit_table = < 500 >;
+			down_rate_limit_table = < 20000 >;
 			upscale_ratio_table = < 80 >;
 		};
 	};
@@ -5091,7 +5091,7 @@
 			dm-type = <DM_CPU_CL1>;
 
 			min-freq = <598000>;
-			max-freq = <1794000>;
+			max-freq = <2314000>;
 			policy-max = <1794000>;
 
 			/* PM QoS Class ID*/
