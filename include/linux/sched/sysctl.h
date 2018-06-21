@@ -19,7 +19,6 @@ extern unsigned int sysctl_sched_min_granularity;
 extern unsigned int sysctl_sched_wakeup_granularity;
 extern unsigned int sysctl_sched_child_runs_first;
 extern unsigned int sysctl_sched_sync_hint_enable;
-extern unsigned int sysctl_sched_initial_task_util;
 extern unsigned int sysctl_sched_cstate_aware;
 #ifdef CONFIG_SCHED_WALT
 extern unsigned int sysctl_sched_use_walt_cpu_util;
@@ -65,11 +64,6 @@ extern int sysctl_sched_rt_runtime;
 extern unsigned int sysctl_sched_cfs_bandwidth_slice;
 #endif
 
-extern unsigned int sysctl_sched_global_boost;
-int sched_global_boost_handler(struct ctl_table *table, int write,
-			       void __user *buffer, size_t *lenp,
-			       loff_t *ppos);
-
 #ifdef CONFIG_SCHED_TUNE
 extern unsigned int sysctl_sched_cfs_boost;
 int sysctl_sched_cfs_boost_handler(struct ctl_table *table, int write,
@@ -88,10 +82,6 @@ static inline unsigned int get_sysctl_sched_cfs_boost(void)
 
 #ifdef CONFIG_SCHED_AUTOGROUP
 extern unsigned int sysctl_sched_autogroup_enabled;
-#endif
-#ifdef CONFIG_SCHED_USE_FLUID_RT
-extern unsigned int sysctl_rt_boost_threshold;
-extern unsigned int sysctl_sched_restrict_cluster_spill;
 #endif
 
 extern int sched_rr_timeslice;

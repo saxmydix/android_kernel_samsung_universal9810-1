@@ -1082,7 +1082,7 @@ int __ref _cpus_down(const struct cpumask *cpus, enum cpuhp_state target)
 			cpumask_set_cpu(cpu, &take_down_cpus);
 		} else {
 			/*
-			 * Hotplug out failed. 
+			 * Hotplug out failed.
 			 * CPU bring up has already been completed.
 			 * Skip next hotplug out step.
 			 */
@@ -1411,7 +1411,7 @@ static int _cpus_up(const struct cpumask *cpus, int tasks_frozen, enum cpuhp_sta
 		raw_spin_lock_irqsave(&rq->lock, flags);
 		if (rq->rd) {
 			BUG_ON(!cpumask_test_cpu(cpu, rq->rd->span));
-			set_rq_online(rq);
+			//set_rq_online(rq);
 		}
 		raw_spin_unlock_irqrestore(&rq->lock, flags);
 

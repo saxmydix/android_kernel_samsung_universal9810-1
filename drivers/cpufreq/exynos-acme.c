@@ -801,37 +801,7 @@ static ssize_t show_cpufreq_table(struct kobject *kobj,
 	return count - 1;
 }
 
-#ifdef CONFIG_SCHED_HMP
-static bool hmp_boost;
-static void control_hmp_boost(bool enable)
-{
-	if (hmp_boost && !enable) {
-		set_hmp_boost(0);
-		hmp_boost = false;
-	} else if (!hmp_boost && enable) {
-		set_hmp_boost(1);
-		hmp_boost = true;
-	}
-}
-#elif defined(CONFIG_SCHED_EHMP)
-#include <linux/ehmp.h>
-
-static bool ehmp_boost;
-static inline void control_hmp_boost(bool enable)
-{
-	if (ehmp_boost && !enable) {
-		request_kernel_prefer_perf(STUNE_TOPAPP, 0);
-		request_kernel_prefer_perf(STUNE_FOREGROUND, 0);
-		ehmp_boost = false;
-	} else if (!ehmp_boost && enable) {
-		request_kernel_prefer_perf(STUNE_TOPAPP, 1);
-		request_kernel_prefer_perf(STUNE_FOREGROUND, 1);
-		ehmp_boost = true;
-	}
-}
-#else
 static inline void control_hmp_boost(bool enable) {}
-#endif
 
 static ssize_t show_cpufreq_min_limit(struct kobject *kobj,
 				struct attribute *attr, char *buf)
@@ -842,19 +812,6 @@ static ssize_t show_cpufreq_min_limit(struct kobject *kobj,
 
 	list_for_each_entry_reverse(domain, &domains, list) {
 		scale++;
-
-#ifdef CONFIG_SCHED_HMP
-		/*
-		 * In HMP architecture, last domain is big.
-		 * If HMP boost is not activated, PM QoS value of
-		 * big is not shown.
-		 */
-		if (domain == last_domain() && !get_hmp_boost())
-			continue;
-#elif defined(CONFIG_SCHED_EHMP)
-		if (domain == last_domain() && !ehmp_boost)
-			continue;
-#endif
 
 		/* get value of minimum PM QoS */
 		pm_qos_min = pm_qos_request(domain->pm_qos_min_class);
@@ -990,15 +947,6 @@ static ssize_t store_cpufreq_min_limit_wo_boost(struct kobject *kobj,
 			pm_qos_update_request(&domain->user_min_qos_wo_boost_req, 0);
 			continue;
 		}
-
-#ifdef CONFIG_SCHED_HMP
-		/*
-		 * If hmp_boost was already activated by cpufreq_min_limit,
-		 * print a message to avoid confusing who activated hmp_boost.
-		 */
-		if (domain == last_domain() && hmp_boost)
-			pr_info("HMP boost was already activated by cpufreq_min_limit node");
-#endif
 
 		freq = min(freq, domain->max_freq);
 		pm_qos_update_request(&domain->user_min_qos_wo_boost_req, freq);
@@ -1514,10 +1462,8 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 	 * tree and CAL. In case of min-freq, min frequency is selected
 	 * to bigger one.
 	 */
-#ifndef CONFIG_EXYNOS_HOTPLUG_GOVERNOR
 	if (!of_property_read_u32(dn, "max-freq", &val))
 		domain->max_freq = min(domain->max_freq, val);
-#endif
 	if (!of_property_read_u32(dn, "min-freq", &val))
 		domain->min_freq = max(domain->min_freq, val);
 #ifdef CONFIG_SEC_PM

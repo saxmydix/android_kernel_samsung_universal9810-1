@@ -32,10 +32,8 @@ void blk_mq_wake_waiters(struct request_queue *q);
 /*
  * CPU hotplug helpers
  */
-#ifndef CONFIG_EXYNOS_HOTPLUG_GOVERNOR
 void blk_mq_enable_hotplug(void);
 void blk_mq_disable_hotplug(void);
-#endif
 
 /*
  * CPU -> queue mappings
