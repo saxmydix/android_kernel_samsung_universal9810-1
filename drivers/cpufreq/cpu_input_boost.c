@@ -20,6 +20,11 @@
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
 
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+static int dynamic_stune_boost;
+module_param(dynamic_stune_boost, uint, 0644);
+#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
+
 static unsigned int input_boost_freq_lp = CONFIG_INPUT_BOOST_FREQ_LP;
 static unsigned int input_boost_freq_hp = CONFIG_INPUT_BOOST_FREQ_PERF;
 static unsigned short input_boost_duration = CONFIG_INPUT_BOOST_DURATION_MS;
@@ -90,6 +95,10 @@ static void update_online_cpu_policy(void)
 	/* Trigger cpufreq notifier for online CPUs */
 	get_online_cpus();
 	for_each_online_cpu(cpu)
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+	/* Reset dynamic stune boost value to the default value */
+	reset_stune_boost("top-app");
+#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
 		cpufreq_update_policy(cpu);
 	put_online_cpus();
 }
@@ -151,6 +160,10 @@ static void input_boost_worker(struct work_struct *work)
 		set_boost_bit(b, INPUT_BOOST);
 		update_online_cpu_policy();
 	}
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+	/* Set dynamic stune boost value */
+	do_stune_boost("top-app", dynamic_stune_boost);
+#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
 
 	queue_delayed_work(b->wq, &b->input_unboost,
 		msecs_to_jiffies(input_boost_duration));
@@ -289,6 +302,11 @@ free_handle:
 
 static void cpu_input_boost_input_disconnect(struct input_handle *handle)
 {
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+	/* Reset dynamic stune boost value to the default value */
+	reset_stune_boost("top-app");
+#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
+
 	input_close_device(handle);
 	input_unregister_handle(handle);
 	kfree(handle);
