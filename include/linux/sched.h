@@ -389,8 +389,6 @@ extern void scheduler_tick(void);
 extern int sched_cpu_starting(unsigned int cpu);
 extern int sched_cpu_activate(unsigned int cpu);
 extern int sched_cpu_deactivate(unsigned int cpu);
-extern void cpuset_cpu_active(void);
-extern int cpuset_cpu_inactive(unsigned int cpu);
 
 #ifdef CONFIG_HOTPLUG_CPU
 extern int sched_cpu_dying(unsigned int cpu);

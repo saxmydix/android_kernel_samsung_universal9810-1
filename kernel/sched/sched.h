@@ -696,7 +696,6 @@ struct rq {
 
 	unsigned long cpu_capacity;
 	unsigned long cpu_capacity_orig;
-	unsigned long cpu_capacity_margin;
 
 	struct callback_head *balance_callback;
 
@@ -998,13 +997,9 @@ extern int group_balance_cpu(struct sched_group *sg);
 
 #if defined(CONFIG_SCHED_DEBUG) && defined(CONFIG_SYSCTL)
 void register_sched_domain_sysctl(void);
-void dirty_sched_domain_sysctl(int cpu);
 void unregister_sched_domain_sysctl(void);
 #else
 static inline void register_sched_domain_sysctl(void)
-{
-}
-static inline void dirty_sched_domain_sysctl(void)
 {
 }
 static inline void unregister_sched_domain_sysctl(void)
@@ -1631,11 +1626,6 @@ static inline unsigned long capacity_orig_of(int cpu)
 	return cpu_rq(cpu)->cpu_capacity_orig;
 }
 
-static inline unsigned long capacity_margin_of(int cpu)
-{
-	return cpu_rq(cpu)->cpu_capacity_margin;
-}
-
 extern unsigned int sysctl_sched_use_walt_cpu_util;
 extern unsigned int walt_ravg_window;
 extern bool walt_disabled;
@@ -1672,7 +1662,7 @@ static inline unsigned long __cpu_util(int cpu, int delta)
 	unsigned long capacity = capacity_orig_of(cpu);
 
 #ifdef CONFIG_SCHED_WALT
-	if (!walt_disabled && sysctl_sched_use_walt_cpu_util)
+	if (!walt_disabled && sysctl_sched_use_walt_cpu_util) 
 		util = div64_u64(cpu_rq(cpu)->cumulative_runnable_avg,
 			       walt_ravg_window >> SCHED_CAPACITY_SHIFT);
 #endif

@@ -25,7 +25,6 @@
 #include <soc/samsung/cal-if.h>
 #include <soc/samsung/exynos-dm.h>
 #include <soc/samsung/ect_parser.h>
-#include <soc/samsung/exynos-cpu_hotplug.h>
 
 #include "exynos-acme.h"
 
@@ -231,9 +230,6 @@ static int scale(struct exynos_cpufreq_domain *domain,
 	ret = pre_scale();
 	if (ret)
 		goto fail_scale;
-
-	/* check cur target freq */
-	exynos_hpgov_validate_scale(policy->cpu, target_freq);
 
 	/* Scale frequency by hooked function, set_freq() */
 	ret = set_freq(domain, target_freq);

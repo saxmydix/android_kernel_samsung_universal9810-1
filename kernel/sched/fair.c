@@ -6055,7 +6055,7 @@ static inline bool __task_fits(struct task_struct *p, int cpu, int util)
 
 	util += boosted_task_util(p);
 
-	return (capacity * capacity_orig_of(cpu)) > (util * capacity_margin_of(cpu));
+	return (capacity * 1024) > (util * capacity_margin);
 }
 
 static inline bool task_fits_max(struct task_struct *p, int cpu)
@@ -6066,7 +6066,7 @@ static inline bool task_fits_max(struct task_struct *p, int cpu)
 	if (capacity == max_capacity)
 		return true;
 
-	if (capacity * capacity_margin_of(cpu) > max_capacity * capacity_orig_of(cpu))
+	if (capacity * capacity_margin > max_capacity * 1024)
 		return true;
 
 	return __task_fits(p, cpu, 0);
@@ -6074,7 +6074,7 @@ static inline bool task_fits_max(struct task_struct *p, int cpu)
 
 static bool __cpu_overutilized(int cpu, int delta)
 {
-	return (capacity_of(cpu) * capacity_orig_of(cpu)) < ((cpu_util(cpu) + delta) * capacity_margin_of(cpu));
+	return (capacity_of(cpu) * 1024) < ((cpu_util(cpu) + delta) * capacity_margin);
 }
 
 static bool cpu_overutilized(int cpu)
@@ -6087,7 +6087,7 @@ static bool cpu_overutilized(int cpu)
 struct reciprocal_value schedtune_spc_rdiv;
 
 static long
-schedtune_margin(unsigned long cap, unsigned long signal, long boost)
+schedtune_margin(unsigned long signal, long boost)
 {
 	long long margin = 0;
 
@@ -6096,11 +6096,11 @@ schedtune_margin(unsigned long cap, unsigned long signal, long boost)
 	 *
 	 * The Boost (B) value is used to compute a Margin (M) which is
 	 * proportional to the complement of the original Signal (S):
-	 *   M = B * (CAPACITY - S)
+	 *   M = B * (SCHED_CAPACITY_SCALE - S)
 	 * The obtained M could be used by the caller to "boost" S.
 	 */
 	if (boost >= 0) {
-		margin  = cap - signal;
+		margin  = SCHED_CAPACITY_SCALE - signal;
 		margin *= boost;
 	} else {
 		margin = -signal * boost;
@@ -6117,19 +6117,17 @@ static inline int
 schedtune_cpu_margin(unsigned long util, int cpu)
 {
 	int boost = schedtune_cpu_boost(cpu);
-	unsigned long cap = capacity_orig_of(cpu);
 
 	if (boost == 0)
 		return 0;
 
-	return schedtune_margin(cap, util, boost);
+	return schedtune_margin(util, boost);
 }
 
 static inline long
 schedtune_task_margin(struct task_struct *p)
 {
 	int boost = schedtune_task_boost(p);
-	unsigned long cap = capacity_orig_of(task_cpu(p));
 	unsigned long util;
 	long margin;
 
@@ -6137,7 +6135,7 @@ schedtune_task_margin(struct task_struct *p)
 		return 0;
 
 	util = task_util(p);
-	margin = schedtune_margin(cap, util, boost);
+	margin = schedtune_margin(util, boost);
 
 	return margin;
 }
@@ -6698,7 +6696,7 @@ done:
 
 	return target;
 }
-
+ 
 /*
  * cpu_util_wake: Compute cpu utilization with any contributions from
  * the waking task p removed.  check_for_migration() looks for a better CPU of
@@ -7042,18 +7040,15 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 /*
  * Disable WAKE_AFFINE in the case where task @p doesn't fit in the
  * capacity of either the waking CPU @cpu or the previous CPU @prev_cpu.
- *
+ * 
  * In that case WAKE_AFFINE doesn't make sense and we'll let
  * BALANCE_WAKE sort things out.
  */
 static int wake_cap(struct task_struct *p, int cpu, int prev_cpu)
 {
-	long min_cap, max_cap, min_cpu;
+	long min_cap, max_cap;
 	min_cap = min(capacity_orig_of(prev_cpu), capacity_orig_of(cpu));
 	max_cap = cpu_rq(cpu)->rd->max_cpu_capacity.val;
-	min_cpu = capacity_orig_of(prev_cpu) <= capacity_orig_of(cpu) ?
-		  prev_cpu : cpu;
-
 	/* Minimum capacity is close to max, no need to abort wake_affine */
 	if (max_cap - min_cap < max_cap >> 3)
 		return 0;
@@ -7061,7 +7056,7 @@ static int wake_cap(struct task_struct *p, int cpu, int prev_cpu)
 	/* Bring task utilization in sync with prev_cpu */
 	sync_entity_load_avg(&p->se);
 
-	return min_cap * capacity_orig_of(min_cpu) < task_util(p) * capacity_margin_of(min_cpu);
+	return min_cap * 1024 < task_util(p) * capacity_margin;
 }
 
 static int select_energy_cpu_brute(struct task_struct *p, int prev_cpu, int sync)
@@ -8412,7 +8407,6 @@ static void update_cpu_capacity(struct sched_domain *sd, int cpu)
 	unsigned long flags;
 
 	cpu_rq(cpu)->cpu_capacity_orig = capacity;
-	cpu_rq(cpu)->cpu_capacity_margin = capacity + (capacity >> 2);
 
 	capacity *= arch_scale_max_freq_capacity(sd, cpu);
 	capacity >>= SCHED_CAPACITY_SHIFT;
@@ -8620,9 +8614,7 @@ group_is_overloaded(struct lb_env *env, struct sg_lb_stats *sgs)
 static inline bool
 group_smaller_cpu_capacity(struct sched_group *sg, struct sched_group *ref)
 {
-	unsigned int cpu = cpumask_first(sched_group_cpus(sg));
-	unsigned int load_scale = capacity_orig_of(cpu);
-	return sg->sgc->max_capacity + capacity_margin_of(cpu) - load_scale <
+	return sg->sgc->max_capacity + capacity_margin - SCHED_CAPACITY_SCALE <
 							ref->sgc->max_capacity;
 }
 
@@ -8691,7 +8683,6 @@ static inline void update_sg_lb_stats(struct lb_env *env,
 {
 	unsigned long load;
 	int i, nr_running;
-	unsigned int sg_cpu;
 
 	memset(sgs, 0, sizeof(*sgs));
 
@@ -8737,9 +8728,8 @@ static inline void update_sg_lb_stats(struct lb_env *env,
 	}
 
 	/* Adjust by relative CPU capacity of the group */
-	sg_cpu = cpumask_first(sched_group_cpus(group));
 	sgs->group_capacity = group->sgc->capacity;
-	sgs->avg_load = (sgs->group_load * capacity_orig_of(sg_cpu)) / sgs->group_capacity;
+	sgs->avg_load = (sgs->group_load*SCHED_CAPACITY_SCALE) / sgs->group_capacity;
 
 	if (sgs->sum_nr_running)
 		sgs->load_per_task = sgs->sum_weighted_load / sgs->sum_nr_running;

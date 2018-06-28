@@ -56,7 +56,6 @@
 #include <asm/ptrace.h>
 #include <asm/virt.h>
 #include <soc/samsung/exynos-sdm.h>
-#include <soc/samsung/exynos-cpu_hotplug.h>
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/ipi.h>
@@ -135,10 +134,8 @@ static inline int op_cpu_kill(unsigned int cpu)
  */
 static int boot_secondary(unsigned int cpu, struct task_struct *idle)
 {
-	if (cpu_ops[cpu]->cpu_boot) {
-		exynos_hpgov_validate_hpin(cpu);
+	if (cpu_ops[cpu]->cpu_boot)
 		return cpu_ops[cpu]->cpu_boot(cpu);
-	}
 
 	return -EOPNOTSUPP;
 }

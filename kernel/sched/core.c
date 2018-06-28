@@ -76,7 +76,6 @@
 #include <linux/frame.h>
 #include <linux/prefetch.h>
 #include <linux/cpufreq_times.h>
-#include <linux/exynos-ss.h>
 
 #include <asm/switch_to.h>
 #include <asm/tlb.h>
@@ -85,8 +84,6 @@
 #ifdef CONFIG_PARAVIRT
 #include <asm/paravirt.h>
 #endif
-
-#include <linux/sec_debug.h>
 
 #include "sched.h"
 #include "../workqueue_internal.h"
@@ -1551,24 +1548,17 @@ static int select_fallback_rq(int cpu, struct task_struct *p)
 	const struct cpumask *nodemask = NULL;
 	enum { cpuset, possible, fail } state = cpuset;
 	int dest_cpu;
-	struct cpumask target_mask;
 
 	/*
 	 * If the node that the cpu is on has been offlined, cpu_to_node()
 	 * will return -1. There is no cpu on the node, and we should
 	 * select the cpu on the other node.
 	 */
-	cpumask_and(&target_mask, cpu_active_mask, cpu_coregroup_mask(cpu));
-	if (cpumask_empty(&target_mask))
-		cpumask_setall(&target_mask);
-	else if (!cpumask_intersects(&target_mask, tsk_cpus_allowed(p)))
-		cpumask_copy(&target_mask, tsk_cpus_allowed(p));
-
 	if (nid != -1) {
 		nodemask = cpumask_of_node(nid);
 
 		/* Look for allowed, online CPU in same node. */
-		for_each_cpu_and(dest_cpu, nodemask, &target_mask) {
+		for_each_cpu(dest_cpu, nodemask) {
 			if (!cpu_active(dest_cpu))
 				continue;
 			if (cpumask_test_cpu(dest_cpu, tsk_cpus_allowed(p)))
@@ -1578,7 +1568,7 @@ static int select_fallback_rq(int cpu, struct task_struct *p)
 
 	for (;;) {
 		/* Any allowed, online CPU? */
-		for_each_cpu_and(dest_cpu, tsk_cpus_allowed(p), &target_mask) {
+		for_each_cpu(dest_cpu, tsk_cpus_allowed(p)) {
 			if (!(p->flags & PF_KTHREAD) && !cpu_active(dest_cpu))
 				continue;
 			if (!cpu_online(dest_cpu))
@@ -1601,11 +1591,6 @@ static int select_fallback_rq(int cpu, struct task_struct *p)
 			break;
 
 		case fail:
-			pr_warn("cpu %d, task %s, active_mask %x, target_mask %x\n", cpu,
-				p->comm, *(unsigned int *)cpumask_bits(cpu_active_mask),
-				*(unsigned int *)cpumask_bits(&target_mask));
-			dest_cpu = 0;
-			goto out;
 			BUG();
 			break;
 		}
@@ -3318,7 +3303,7 @@ static noinline void __schedule_bug(struct task_struct *prev)
 	if (oops_in_progress)
 		return;
 
-	pr_auto(ASL6, "BUG: scheduling while atomic: %s/%d/0x%08x\n",
+	printk(KERN_ERR "BUG: scheduling while atomic: %s/%d/0x%08x\n",
 		prev->comm, prev->pid, preempt_count());
 
 	debug_show_held_locks(prev);
@@ -3335,9 +3320,6 @@ static noinline void __schedule_bug(struct task_struct *prev)
 		panic("scheduling while atomic\n");
 
 	dump_stack();
-#ifdef CONFIG_DEBUG_ATOMIC_SLEEP_PANIC
-	BUG();
-#endif
 	add_taint(TAINT_WARN, LOCKDEP_STILL_OK);
 }
 
@@ -3523,7 +3505,6 @@ static void __sched notrace __schedule(bool preempt)
 		raw_spin_unlock_irq(&rq->lock);
 	}
 
-	exynos_ss_task(smp_processor_id(), rq->curr);
 	balance_callback(rq);
 }
 
@@ -6235,7 +6216,6 @@ cpu_attach_domain(struct sched_domain *sd, struct root_domain *rd, int cpu)
 	rq_attach_root(rq, rd);
 	tmp = rq->sd;
 	rcu_assign_pointer(rq->sd, sd);
-	dirty_sched_domain_sysctl(cpu);
 	destroy_sched_domains(tmp);
 
 	update_top_cache_domain(cpu);
@@ -7518,7 +7498,7 @@ static int num_cpus_frozen;	/* used to mark begin/end of suspend/resume */
  * If we come here as part of a suspend/resume, don't touch cpusets because we
  * want to restore it back to its original state upon resume anyway.
  */
-void cpuset_cpu_active(void)
+static void cpuset_cpu_active(void)
 {
 	if (cpuhp_tasks_frozen) {
 		/*
@@ -7540,7 +7520,7 @@ void cpuset_cpu_active(void)
 	cpuset_update_active_cpus(true);
 }
 
-int cpuset_cpu_inactive(unsigned int cpu)
+static int cpuset_cpu_inactive(unsigned int cpu)
 {
 	unsigned long flags;
 	struct dl_bw *dl_b;
@@ -7989,7 +7969,7 @@ void ___might_sleep(const char *file, int line, int preempt_offset)
 	/* Save this before calling printk(), since that will clobber it */
 	preempt_disable_ip = get_preempt_disable_ip(current);
 
-	pr_auto(ASL6,
+	printk(KERN_ERR
 		"BUG: sleeping function called from invalid context at %s:%d\n",
 			file, line);
 	printk(KERN_ERR
@@ -8010,9 +7990,6 @@ void ___might_sleep(const char *file, int line, int preempt_offset)
 		pr_cont("\n");
 	}
 	dump_stack();
-#ifdef CONFIG_DEBUG_ATOMIC_SLEEP_PANIC
-	BUG();
-#endif
 	add_taint(TAINT_WARN, LOCKDEP_STILL_OK);
 }
 EXPORT_SYMBOL(___might_sleep);

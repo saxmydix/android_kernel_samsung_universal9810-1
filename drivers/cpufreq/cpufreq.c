@@ -763,6 +763,8 @@ static ssize_t store_##file_name					\
 	struct cpufreq_policy new_policy;				\
 									\
 	memcpy(&new_policy, policy, sizeof(*policy));			\
+	new_policy.min = policy->user_policy.min;			\
+	new_policy.max = policy->user_policy.max;			\
 									\
 	ret = sscanf(buf, "%u", &new_policy.object);			\
 	if (ret != 1)							\
@@ -2282,11 +2284,8 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 	* This check works well when we store new min/max freq attributes,
 	* because new_policy is a copy of policy with one field updated.
 	*/
-	if (new_policy->min > new_policy->max) {
-		pr_warn("%s: new_policy-min(%u) is higher than new_policy->max(%u)\n",
-					__func__, new_policy->min, new_policy->max);
-		new_policy->min = new_policy->max;
-	}
+	if (new_policy->min > new_policy->max)
+		return -EINVAL;
 
 	/* verify the cpu speed can be set within this limit */
 	ret = cpufreq_driver->verify(new_policy);
@@ -2308,8 +2307,6 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 	/* notification of the new policy */
 	blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
 			CPUFREQ_NOTIFY, new_policy);
-
-	new_policy->cur = policy->cur;
 
 	scale_max_freq_capacity(policy->cpus, policy->max);
 	scale_min_freq_capacity(policy->cpus, policy->min);

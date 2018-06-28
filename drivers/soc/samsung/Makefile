@@ -37,9 +37,6 @@ obj-$(CONFIG_USI_V2) += usi_v2.o
 #CPUIDLE_PROFILER
 obj-$(CONFIG_ARM64_EXYNOS_CPUIDLE)	+= cpuidle_profiler.o
 
-#CPUHOTPLUG
-obj-$(CONFIG_ARCH_EXYNOS)	+= exynos-cpu_hotplug.o
-
 # DVFS
 obj-$(CONFIG_EXYNOS_DVFS_MANAGER)	+= exynos-dm.o
 obj-$(CONFIG_EXYNOS_MCINFO)	+= exynos-mcinfo.o
