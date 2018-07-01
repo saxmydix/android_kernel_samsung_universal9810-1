@@ -4978,68 +4978,6 @@
 		};
 	};
 
-	schedutil {
-		domain@0 {
-			device_type = "freqvar-tune";
-			shared-cpus = "0-3";
-
-			boost_table = < 0 >;
-			up_rate_limit_table = < 500 >;
-			down_rate_limit_table = < 20000 >;
-			upscale_ratio_table = < 80 1248000 90 1456000 95 >;
-		};
-		domain@1 {
-			device_type = "freqvar-tune";
-			shared-cpus = "4-7";
-
-			boost_table = < 0 >;
-			up_rate_limit_table = < 500 >;
-			down_rate_limit_table = < 20000 >;
-			upscale_ratio_table = < 80 1261000 95 >;
-		};
-	};
-
-	cpu_hotplug {
-		compatible = "exynos, cpu_hotplug";
-		boot_lock_time = <40>;
-		fast_hp_cpus = "5-7";
-	};
-
-	hotplug_governor {
-		compatible = "exynos, hotplug_governor";
-
-		single_change_ms = <30>;
-		dual_change_ms = <30>;
-		quad_change_ms = <15>;
-		big_heavy_thr = <600>;
-		lit_heavy_thr = <180>;
-		cl_busy_ratio = <65>;
-		/* single_freq is parsed from ECT */
-		dual_freq = <2314000>;
-		triple_freq = <1794000>;
-		quad_freq = <1794000>;
-		cal-id = <ACPM_DVFS_CPUCL1>;
-	};
-
-	schedutil_gov {
-		schedutil_domain0: domain@0 {
-			device_type = "schedutil-domain";
-			shared-cpus = "0-3";
-
-			enabled = <0>;		/* Disable */
-			qos_min_class = <3>;
-		};
-
-		schedutil_domain1: domain@1 {
-			device_type = "schedutil-domain";
-			shared-cpus = "4-7";
-
-			enabled = <1>;		/* Enabled */
-			expired_time = <80>;	/* 80ms */
-			qos_min_class = <5>;
-		};
-	};
-
 	cpufreq {
 		cpufreq_domain0: domain@0 {
 			device_type = "cpufreq-domain";
@@ -5149,7 +5087,7 @@
 		id = <0>;
 		sensors = <94>;		/* 0x5E */
 		sensing_mode = "balance";
-		hotplug_enable = <1>;
+		hotplug_enable = <0>;
 		hotplug_in_threshold = <91>;
 		hotplug_out_threshold = <96>;
 		#include "exynos9810-tmu-sensor-conf.dtsi"
