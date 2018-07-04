@@ -4996,7 +4996,8 @@
 			device_type = "schedutil-domain";
 			shared-cpus = "0-3";
 
-			enabled = <0>;		/* Disable */
+			enabled = <1>;		/* Enabled */
+      expired_time = <35>;	/* 35ms */
 			qos_min_class = <3>;
 		};
 
@@ -5005,7 +5006,7 @@
 			shared-cpus = "4-7";
 
 			enabled = <1>;		/* Enabled */
-			expired_time = <80>;	/* 80ms */
+			expired_time = <70>;	/* 70ms */
 			qos_min_class = <5>;
 		};
 	};
