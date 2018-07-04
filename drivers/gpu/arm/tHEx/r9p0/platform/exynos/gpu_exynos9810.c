@@ -69,9 +69,11 @@ void __iomem *g3d1_outstanding_regs;
 
 /*  clk,vol,abb,min,max,down stay, pm_qos mem, pm_qos int, pm_qos cpu_kfc_min, pm_qos cpu_egl_max */
 static gpu_dvfs_info gpu_dvfs_table_default[] = {
-	{572, 800000, 0, 78, 100, 9, 0, 1794000, 400000, 1950000, CPU_MAX},
-	{546, 800000, 0, 78,  99, 5, 0, 1794000, 400000, 1950000, CPU_MAX},
+	{598, 800000, 0, 78, 100, 5, 0, 1794000, 400000, 1950000, CPU_MAX},
+	{572, 800000, 0, 78,  99, 9, 0, 1794000, 400000, 1950000, CPU_MAX},
+	{546, 800000, 0, 78,  98, 5, 0, 1794000, 400000, 1950000, CPU_MAX},
 	{455, 800000, 0, 78,  85, 1, 0, 1539000, 400000, 1794000, CPU_MAX},
+	{385, 800000, 0, 78,  85, 1, 0, 1352000, 336000, 1456000, CPU_MAX},
 	{338, 800000, 0, 78,  85, 1, 0, 1352000, 267000, 1248000, CPU_MAX},
 	{299, 800000, 0, 78,  85, 1, 0, 1014000, 267000,       0, CPU_MAX},
 	{260, 800000, 0, 78,  85, 1, 0,  676000, 178000,       0, CPU_MAX},
@@ -86,12 +88,12 @@ static int mif_min_table[] = {
 };
 
 static gpu_attribute gpu_config_attributes[] = {
-	{GPU_MAX_CLOCK, 572},
-	{GPU_MAX_CLOCK_LIMIT, 572},
+	{GPU_MAX_CLOCK, 592},
+	{GPU_MAX_CLOCK_LIMIT, 592},
 	{GPU_MIN_CLOCK, 260},
 	{GPU_DVFS_START_CLOCK, 260},
 	{GPU_DVFS_BL_CONFIG_CLOCK, 260},
-	{GPU_GOVERNOR_TYPE, G3D_DVFS_GOVERNOR_INTERACTIVE},
+	{GPU_GOVERNOR_TYPE, G3D_DVFS_GOVERNOR_STATIC},
 	{GPU_GOVERNOR_START_CLOCK_DEFAULT, 260},
 	{GPU_GOVERNOR_START_CLOCK_INTERACTIVE, 260},
 	{GPU_GOVERNOR_START_CLOCK_STATIC, 260},
