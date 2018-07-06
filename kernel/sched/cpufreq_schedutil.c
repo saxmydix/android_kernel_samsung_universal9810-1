@@ -204,6 +204,15 @@ static void sugov_update_commit(struct sugov_policy *sg_policy, u64 time,
 	}
 }
 
+#ifdef CONFIG_FREQVAR_TUNE
+unsigned int freqvar_tipping_point(int cpu, unsigned int freq);
+#else
+static inline unsigned int freqvar_tipping_point(int cpu, unsigned int freq)
+{
+	return  freq + (freq >> 2);
+}
+#endif
+
 unsigned long __cpu_norm_util(unsigned long util, unsigned long capacity);
 
 static unsigned long sugov_find_cap_power_limit(struct sugov_policy *sg_policy, unsigned long max_cap)
@@ -263,7 +272,7 @@ static unsigned int get_next_freq(struct sugov_policy *sg_policy,
 	unsigned int cap_util = sugov_find_cap_power_limit(sg_policy, max);
 
 	if (cap_util > util)
-		freq = (freq + (freq >> 2)) * util / max;
+		freq = freqvar_tipping_point(policy->cpu, freq) * util / max;
 	else
 		freq = freq * cap_util / max;
 
