@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm64 4.9.117 Kernel Configuration
+# Linux/arm64 4.9.118 Kernel Configuration
 #
 CONFIG_ARM64=y
 CONFIG_64BIT=y
@@ -46,7 +46,7 @@ CONFIG_CROSS_COMPILE=""
 # CONFIG_COMPILE_TEST is not set
 CONFIG_LOCALVERSION=""
 # CONFIG_LOCALVERSION_AUTO is not set
-CONFIG_DEFAULT_HOSTNAME="(none)"
+CONFIG_LOCALVERSION="_TeamUB_Kernel_SM-G965F_V18.8.0"
 CONFIG_SWAP=y
 # CONFIG_SYSVIPC is not set
 # CONFIG_POSIX_MQUEUE is not set
